@@ -2,6 +2,10 @@
 
 A fullstack medical triage application where patients answer a short questionnaire to determine the level of care they need and are then presented with available appointment slots to book.
 
+## TODO
+- app allows to book 5 appointments to Doctor for same patient and time. That means the limiting by specialists is not working, and by patient overbooking is not checked. 
+- which dates the slots are generated for, when?
+
 ---
 
 ## Tech Stack
