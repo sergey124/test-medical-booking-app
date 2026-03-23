@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,10 +19,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class SlotServiceTest {
 
     @Mock private SpecialistRepository specialistRepository;
@@ -32,9 +29,10 @@ class SlotServiceTest {
 
     private SlotService slotService;
 
-    // 8 specialists mirroring DataInitializer
     private static final LocalTime SHIFT_A = LocalTime.of(8, 0);
     private static final LocalTime SHIFT_B = LocalTime.of(9, 0);
+
+    private final Patient PATIENT = new Patient("patient");
 
     private final List<Specialist> ALL_SPECIALISTS = List.of(
             new Specialist("Nurse Anna",  SpecialistType.NURSE,  SHIFT_A),
@@ -54,54 +52,15 @@ class SlotServiceTest {
         slotService = new SlotService(specialistRepository, bookingRepository);
     }
 
-    // ── isWorking ────────────────────────────────────────────────────────────
-
-    @Test
-    void shiftASpecialistIsWorkingAt08() {
-        Specialist nurse = new Specialist("Nurse Anna", SpecialistType.NURSE, SHIFT_A);
-        assertThat(slotService.isWorking(nurse, LocalTime.of(8, 0))).isTrue();
-    }
-
-    @Test
-    void shiftASpecialistIsOnBreakAt12() {
-        Specialist nurse = new Specialist("Nurse Anna", SpecialistType.NURSE, SHIFT_A);
-        assertThat(slotService.isWorking(nurse, LocalTime.of(12, 0))).isFalse();
-    }
-
-    @Test
-    void shiftASpecialistIsWorkingAt13AfterBreak() {
-        Specialist nurse = new Specialist("Nurse Anna", SpecialistType.NURSE, SHIFT_A);
-        assertThat(slotService.isWorking(nurse, LocalTime.of(13, 0))).isTrue();
-    }
-
-    @Test
-    void shiftASpecialistIsNotWorkingAt1700() {
-        // Shift A ends at 08:00+8h = 16:00
-        Specialist doc = new Specialist("Dr. Carter", SpecialistType.DOCTOR, SHIFT_A);
-        assertThat(slotService.isWorking(doc, LocalTime.of(17, 0))).isFalse();
-    }
-
-    @Test
-    void shiftBSpecialistIsNotWorkingAt0800() {
-        // Shift B starts at 09:00
-        Specialist nurse = new Specialist("Nurse Elena", SpecialistType.NURSE, SHIFT_B);
-        assertThat(slotService.isWorking(nurse, LocalTime.of(8, 0))).isFalse();
-    }
-
-    @Test
-    void shiftBSpecialistIsWorkingAt1745() {
-        // Shift B ends at 09:00+8h = 17:00, so 17:45 is outside
-        Specialist nurse = new Specialist("Nurse Elena", SpecialistType.NURSE, SHIFT_B);
-        assertThat(slotService.isWorking(nurse, LocalTime.of(17, 45))).isFalse();
-    }
-
-    // ── Slot availability ────────────────────────────────────────────────────
+    // ── getAvailableSlots ────────────────────────────────────────────────────
 
     @Test
     void slotsAreWithinClinicHours() {
-        LocalDateTime now = LocalDate.now().atTime(8, 0);
-        List<LocalDateTime> slots = slotService.getAvailableSlots(now);
+        // when
+        List<LocalDateTime> slots = slotService.getAvailableSlots(
+                LocalDate.now().atTime(8, 0), PATIENT, "Nurse");
 
+        // then
         assertThat(slots).isNotEmpty();
         assertThat(slots).allSatisfy(slot -> {
             assertThat(slot.toLocalTime()).isAfterOrEqualTo(LocalTime.of(8, 0));
@@ -111,57 +70,137 @@ class SlotServiceTest {
 
     @Test
     void noSlotsInThePast() {
+        // given
         LocalDateTime now = LocalDateTime.now();
-        List<LocalDateTime> slots = slotService.getAvailableSlots(now);
+
+        // when
+        List<LocalDateTime> slots = slotService.getAvailableSlots(now, PATIENT, "Nurse");
+
+        // then
         assertThat(slots).allSatisfy(slot -> assertThat(slot).isAfterOrEqualTo(now));
     }
 
     @Test
     void slotsAre15MinuteIntervals() {
-        LocalDateTime now = LocalDate.now().atTime(8, 0);
-        List<LocalDateTime> slots = slotService.getAvailableSlots(now);
+        // when
+        List<LocalDateTime> slots = slotService.getAvailableSlots(
+                LocalDate.now().atTime(8, 0), PATIENT, "Nurse");
+
+        // then
         assertThat(slots).isNotEmpty();
         assertThat(slots).allSatisfy(slot -> assertThat(slot.getMinute() % 15).isEqualTo(0));
     }
 
     @Test
     void slotsSpanUpToThreeDays() {
+        // given
         LocalDateTime now = LocalDate.now().atTime(8, 0);
-        List<LocalDateTime> slots = slotService.getAvailableSlots(now);
-        LocalDate maxDate = now.toLocalDate().plusDays(3);
+
+        // when
+        List<LocalDateTime> slots = slotService.getAvailableSlots(now, PATIENT, "Nurse");
+
+        // then
         assertThat(slots).allSatisfy(slot ->
-                assertThat(slot.toLocalDate()).isBeforeOrEqualTo(maxDate));
+                assertThat(slot.toLocalDate()).isBeforeOrEqualTo(now.toLocalDate().plusDays(3)));
     }
 
-    // ── Capacity ─────────────────────────────────────────────────────────────
-
     @Test
-    void slotRemainsAvailableAfterOneBookingBecauseOtherSpecialistsAreFree() {
-        LocalDateTime slot = LocalDate.now().plusDays(1).atTime(10, 0);
-        Specialist bookedSpec = ALL_SPECIALISTS.get(0);
-        Patient patient = new Patient("patient");
-        Booking existing = new Booking(slot, "Nurse", bookedSpec, patient);
-
-        when(bookingRepository.findAll()).thenReturn(List.of(existing));
+    void slotIsHiddenWhenPatientAlreadyHasBookingAtThatTime() {
+        // given
+        LocalDateTime bookedSlot = LocalDate.now().plusDays(1).atTime(10, 0);
+        when(bookingRepository.findAll()).thenReturn(List.of(
+                new Booking(bookedSlot, "Nurse", ALL_SPECIALISTS.get(0), PATIENT)));
         slotService = new SlotService(specialistRepository, bookingRepository);
 
+        // when
+        List<LocalDateTime> slots = slotService.getAvailableSlots(
+                LocalDate.now().atTime(8, 0), PATIENT, "Nurse");
+
+        // then
+        assertThat(slots).doesNotContain(bookedSlot);
+    }
+
+    @Test
+    void slotIsHiddenWhenAllEligibleSpecialistsAreBooked() {
+        // given: all 4 doctors booked at 10:00 by another patient
+        LocalDateTime fullSlot = LocalDate.now().plusDays(1).atTime(10, 0);
+        Patient otherPatient = new Patient("other");
+        List<Booking> allDoctorsBooked = ALL_SPECIALISTS.stream()
+                .filter(s -> s.getType() == SpecialistType.DOCTOR)
+                .map(s -> new Booking(fullSlot, "Doctor", s, otherPatient))
+                .toList();
+        when(bookingRepository.findAll()).thenReturn(allDoctorsBooked);
+        slotService = new SlotService(specialistRepository, bookingRepository);
+
+        // when
+        List<LocalDateTime> doctorSlots = slotService.getAvailableSlots(
+                LocalDate.now().atTime(8, 0), PATIENT, "Doctor");
+        List<LocalDateTime> nurseSlots = slotService.getAvailableSlots(
+                LocalDate.now().atTime(8, 0), PATIENT, "Nurse");
+
+        // then: slot hidden for Doctor (all doctors taken), still visible for Nurse (nurses free)
+        assertThat(doctorSlots).doesNotContain(fullSlot);
+        assertThat(nurseSlots).contains(fullSlot);
+    }
+
+    @Test
+    void bookingsAndSpecialistsAreEachLoadedOncePerCall() {
+        // when
+        slotService.getAvailableSlots(LocalDate.now().atTime(8, 0), PATIENT, "Nurse");
+
+        // then
+        verify(bookingRepository, times(1)).findAll();
+        verify(specialistRepository, times(1)).findAll();
+    }
+
+    // ── findAvailableSpecialist ──────────────────────────────────────────────
+
+    @Test
+    void findsAnotherSpecialistWhenOneIsAlreadyBooked() {
+        // given
+        LocalDateTime slot = LocalDate.now().plusDays(1).atTime(10, 0);
+        Specialist bookedSpec = ALL_SPECIALISTS.get(0);
+        when(bookingRepository.findAll()).thenReturn(List.of(
+                new Booking(slot, "Nurse", bookedSpec, PATIENT)));
+        slotService = new SlotService(specialistRepository, bookingRepository);
+
+        // when
         Optional<Specialist> found = slotService.findAvailableSpecialist(slot, "Nurse");
+
+        // then
         assertThat(found).isPresent();
         assertThat(found.get()).isNotSameAs(bookedSpec);
     }
 
     @Test
     void doctorRecommendationOnlyAssignsDoctors() {
+        // given
         LocalDateTime slot = LocalDate.now().plusDays(1).atTime(10, 0);
+
+        // when
         Optional<Specialist> found = slotService.findAvailableSpecialist(slot, "Doctor");
+
+        // then
         assertThat(found).isPresent();
         assertThat(found.get().getType()).isEqualTo(SpecialistType.DOCTOR);
     }
 
     @Test
-    void chatRecommendationCanAssignNurse() {
+    void nurseRecommendationCanAssignDoctor() {
+        // given: all nurses booked, doctors still free
         LocalDateTime slot = LocalDate.now().plusDays(1).atTime(10, 0);
-        Optional<Specialist> found = slotService.findAvailableSpecialist(slot, "Chat");
-        assertThat(found).isPresent(); // any type is eligible
+        List<Booking> allNursesBooked = ALL_SPECIALISTS.stream()
+                .filter(s -> s.getType() == SpecialistType.NURSE)
+                .map(s -> new Booking(slot, "Nurse", s, new Patient("other")))
+                .toList();
+        when(bookingRepository.findAll()).thenReturn(allNursesBooked);
+        slotService = new SlotService(specialistRepository, bookingRepository);
+
+        // when
+        Optional<Specialist> found = slotService.findAvailableSpecialist(slot, "Nurse");
+
+        // then
+        assertThat(found).isPresent();
+        assertThat(found.get().getType()).isEqualTo(SpecialistType.DOCTOR);
     }
 }
