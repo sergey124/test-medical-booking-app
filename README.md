@@ -97,6 +97,7 @@ cd backend
 - Frontend tests — unit tests for state machine and slot formatting
 - Competence choice — prioritize doctors for Doctor, nurses for Nurse, add chat operators.
 - Scaling - handle 10m users/doctors. Cloud DB, containers auto-scaling, caching, indexing, CDN, microservices & frontends.
+  - use some enterprise pattern for Scheduler - e.g. worker for slots generation, worker for scheduling
 - Performance - prioritize Apdex.
 - Usability - optimize click path, customer development via focus group, A/B testing
 - Monitoring - Error logs, Correlation ID, Observability for frontend & backend.

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { AssessmentResponse, BookingResponse } from '../types';
 import { confirmBooking } from '../api';
 
@@ -29,17 +29,39 @@ const RECOMMENDATION_INFO: Record<string, { icon: string; color: string; descrip
   },
 };
 
-function formatSlot(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function formatDayLabel(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const diff = Math.round((date.getTime() - today.getTime()) / 86_400_000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Tomorrow';
+  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function formatTime(iso: string): string {
+  const [, timePart] = iso.split('T');
+  const [hStr, mStr] = timePart.split(':');
+  const h = parseInt(hStr, 10);
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${mStr} ${ampm}`;
 }
 
 export default function Results({ result, onConfirmed, onCancel }: Props) {
+  const slotsByDay = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const slot of result.availableSlots) {
+      const day = slot.split('T')[0];
+      if (!map.has(day)) map.set(day, []);
+      map.get(day)!.push(slot);
+    }
+    return map;
+  }, [result.availableSlots]);
+
+  const days = useMemo(() => Array.from(slotsByDay.keys()), [slotsByDay]);
+
+  const [selectedDay, setSelectedDay] = useState<string>(days[0] ?? '');
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [error, setError] = useState('');
@@ -49,6 +71,11 @@ export default function Results({ result, onConfirmed, onCancel }: Props) {
     color: 'bg-gray-50 border-gray-200 text-gray-900',
     description: 'Please choose a slot below to book your appointment.',
   };
+
+  function selectDay(day: string) {
+    setSelectedDay(day);
+    setSelectedSlot(null);
+  }
 
   function handleBook() {
     if (!selectedSlot) return;
@@ -61,6 +88,8 @@ export default function Results({ result, onConfirmed, onCancel }: Props) {
         setIsBooking(false);
       });
   }
+
+  const timesForDay = slotsByDay.get(selectedDay) ?? [];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-teal-50 px-4 py-8">
@@ -84,26 +113,47 @@ export default function Results({ result, onConfirmed, onCancel }: Props) {
         {result.availableSlots.length === 0 ? (
           <p className="text-sm text-gray-500 mb-6">No slots available at the moment. Please try again later.</p>
         ) : (
-          <div
-            className="grid grid-cols-1 gap-2 mb-6 max-h-64 overflow-y-auto pr-1"
-            role="listbox"
-            aria-label="Available appointment slots"
-          >
-            {result.availableSlots.slice(0, 20).map(slot => (
-              <button
-                key={slot}
-                role="option"
-                aria-selected={selectedSlot === slot}
-                onClick={() => setSelectedSlot(slot)}
-                className={`px-4 py-2.5 rounded-lg text-sm font-medium border-2 transition text-left focus:outline-none focus:ring-2 focus:ring-teal-400
-                  ${selectedSlot === slot
-                    ? 'border-teal-500 bg-teal-50 text-teal-900'
-                    : 'border-gray-200 text-gray-700 hover:border-teal-300'}`}
-              >
-                {formatSlot(slot)}
-              </button>
-            ))}
-          </div>
+          <>
+            {/* Day tabs */}
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-1" role="tablist" aria-label="Select day">
+              {days.map(day => (
+                <button
+                  key={day}
+                  role="tab"
+                  aria-selected={selectedDay === day}
+                  onClick={() => selectDay(day)}
+                  className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium border-2 transition focus:outline-none focus:ring-2 focus:ring-teal-400
+                    ${selectedDay === day
+                      ? 'border-teal-500 bg-teal-50 text-teal-900'
+                      : 'border-gray-200 text-gray-600 hover:border-teal-300'}`}
+                >
+                  {formatDayLabel(day)}
+                </button>
+              ))}
+            </div>
+
+            {/* Time grid */}
+            <div
+              className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-6 max-h-56 overflow-y-auto pr-1"
+              role="listbox"
+              aria-label="Available times"
+            >
+              {timesForDay.map(slot => (
+                <button
+                  key={slot}
+                  role="option"
+                  aria-selected={selectedSlot === slot}
+                  onClick={() => setSelectedSlot(slot)}
+                  className={`py-2.5 rounded-lg text-sm font-medium border-2 transition text-center focus:outline-none focus:ring-2 focus:ring-teal-400
+                    ${selectedSlot === slot
+                      ? 'border-teal-500 bg-teal-50 text-teal-900'
+                      : 'border-gray-200 text-gray-700 hover:border-teal-300'}`}
+                >
+                  {formatTime(slot)}
+                </button>
+              ))}
+            </div>
+          </>
         )}
 
         {error && (
