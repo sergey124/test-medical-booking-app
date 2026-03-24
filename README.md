@@ -11,12 +11,13 @@ A fullstack medical triage application where patients answer a short questionnai
 - Spring Data JPA + H2 — default ORM, easy to swap in-memory with Postgres or MySQL
 - Maven — standard build tool
 
-### Frontend — React 18 + TypeScript + Vite + Tailwind CSS v4
+### Frontend — React 18 + TypeScript + Vite + Tailwind CSS v4 + Zustand
 
 - React 18 — industry-standard UI library
 - TypeScript — type safety gives faster feedback, more LLM-friendly
 - Vite — fast dev server and build tool
 - Tailwind CSS v4 — open-source utility CSS, responsive design
+- Zustand — lightweight state management with persistence, wired sessionStorage
 
 ---
 
@@ -112,11 +113,12 @@ Videos of failing tests are saved to `frontend/test-results/`.
   - Nurse can handle: Chat & Nurse.
 - no prioritizing or balancing specialists/professions.
 - backend uses `LocalDateTime` (no timezone). Frontend uses browser local time.
+- state is saved per phase, not within phase: landing, questions, recommendation, booked appointment
 
 ---
 
 ## What to improve given more time
-
+- Save state within questionnaire & slot picker
 - Authentication — JWT-based auth, social login (Google, Facebook, Microsoft...)
 - Persistent DB — PostgreSQL profile
 - Frontend tests — unit tests for state machine and slot formatting

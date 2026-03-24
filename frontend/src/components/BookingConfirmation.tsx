@@ -1,16 +1,13 @@
-import type { BookingResponse } from '../types';
 import { formatDateTime } from '../utils/format';
+import { useAppStore } from '../store/appStore';
 
 const SLOT_FORMAT: Intl.DateTimeFormatOptions = {
   weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
 };
 
-interface Props {
-  booking: BookingResponse;
-  onReturnHome: () => void;
-}
-
-export default function BookingConfirmation({ booking, onReturnHome }: Props) {
+export default function BookingConfirmation() {
+  const booking = useAppStore((s) => s.booking)!;
+  const onReturnHome = useAppStore((s) => s.returnHome);
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-teal-50 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">

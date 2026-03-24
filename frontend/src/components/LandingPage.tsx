@@ -1,11 +1,9 @@
 import { formatDateTime, formatWaitTime } from '../utils/format';
+import { useAppStore } from '../store/appStore';
 
-interface Props {
-  bookedSlot?: string;
-  onBook: () => void;
-}
-
-export default function LandingPage({ bookedSlot, onBook }: Props) {
+export default function LandingPage() {
+  const bookedSlot = useAppStore((s) => s.booking?.slot);
+  const onBook = useAppStore((s) => s.startBooking);
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-teal-50 px-4 text-center">
       <div className="max-w-lg w-full">

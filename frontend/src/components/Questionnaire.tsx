@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { questions } from '../data/questions';
 import { submitAssessment } from '../api';
-import type { AssessmentResponse } from '../types';
 import ProgressBar from './ProgressBar';
 import QuestionCard from './QuestionCard';
+import { useAppStore } from '../store/appStore';
 
-interface Props {
-  onComplete: (result: AssessmentResponse) => void;
-  onCancel: () => void;
-}
-
-export default function Questionnaire({ onComplete, onCancel }: Props) {
+export default function Questionnaire() {
+  const completeAssessment = useAppStore((s) => s.completeAssessment);
+  const cancel = useAppStore((s) => s.cancel);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(Array(questions.length).fill(null));
   const [error, setError] = useState('');
@@ -50,7 +47,7 @@ export default function Questionnaire({ onComplete, onCancel }: Props) {
     setIsSubmitting(true);
     setError('');
     submitAssessment(total)
-      .then(result => onComplete(result))
+      .then(result => completeAssessment(result))
       .catch(err => {
         setError(err.message || 'Something went wrong. Please try again.');
         setIsSubmitting(false);
@@ -81,7 +78,7 @@ export default function Questionnaire({ onComplete, onCancel }: Props) {
             selectedScore={answers[currentIndex]}
             onSelect={selectAnswer}
             onBack={handleBack}
-            onCancel={onCancel}
+            onCancel={cancel}
             onNext={handleNext}
             isFirst={isFirst}
             isLast={isLast}

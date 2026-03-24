@@ -1,13 +1,7 @@
 import { useMemo, useState } from 'react';
-import type { AssessmentResponse, BookingResponse } from '../types';
 import { confirmBooking } from '../api';
 import { formatDayLabel, formatTime } from '../utils/format';
-
-interface Props {
-  result: AssessmentResponse;
-  onConfirmed: (booking: BookingResponse) => void;
-  onCancel: () => void;
-}
+import { useAppStore } from '../store/appStore';
 
 const RECOMMENDATION_INFO: Record<string, { icon: string; color: string; description: string }> = {
   Chat: {
@@ -30,7 +24,10 @@ const RECOMMENDATION_INFO: Record<string, { icon: string; color: string; descrip
   },
 };
 
-export default function Results({ result, onConfirmed, onCancel }: Props) {
+export default function Results() {
+  const result = useAppStore((s) => s.assessmentResult)!;
+  const confirmBookingAction = useAppStore((s) => s.confirmBooking);
+  const cancel = useAppStore((s) => s.cancel);
   const slotsByDay = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const slot of result.availableSlots) {
@@ -64,7 +61,7 @@ export default function Results({ result, onConfirmed, onCancel }: Props) {
     setIsBooking(true);
     setError('');
     confirmBooking(selectedSlot, result.recommendation)
-      .then(onConfirmed)
+      .then(confirmBookingAction)
       .catch(err => {
         setError(err.message || 'Booking failed. Please try again.');
         setIsBooking(false);
@@ -146,7 +143,7 @@ export default function Results({ result, onConfirmed, onCancel }: Props) {
 
         <div className="flex gap-3">
           <button
-            onClick={onCancel}
+            onClick={cancel}
             disabled={isBooking}
             className="flex-1 py-2.5 border border-gray-300 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-gray-300"
           >

@@ -1,14 +1,12 @@
 import { useState } from 'react';
-
-interface Props {
-  onLogin: () => void;
-}
+import { useAppStore } from '../store/appStore';
 
 // Mock credentials — no real auth required per spec
 const MOCK_USER = 'patient';
 const MOCK_PASS = 'kry123';
 
-export default function Login({ onLogin }: Props) {
+export default function Login() {
+  const login = useAppStore((s) => s.login);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,7 +14,7 @@ export default function Login({ onLogin }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (username === MOCK_USER && password === MOCK_PASS) {
-      onLogin();
+      login();
     } else {
       setError('Invalid credentials. Try patient / kry123');
     }

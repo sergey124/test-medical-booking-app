@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import type { Screen, AssessmentResponse, BookingResponse } from './types';
+import { useAppStore } from './store/appStore';
 import Login from './components/Login';
 import LandingPage from './components/LandingPage';
 import Questionnaire from './components/Questionnaire';
@@ -7,76 +6,23 @@ import Results from './components/Results';
 import BookingConfirmation from './components/BookingConfirmation';
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('login');
-  const [assessmentResult, setAssessmentResult] = useState<AssessmentResponse | null>(null);
-  const [booking, setBooking] = useState<BookingResponse | null>(null);
-
-  function handleLogin() {
-    setScreen('landing');
-  }
-
-  function handleStartBooking() {
-    setAssessmentResult(null);
-    setBooking(null);
-    setScreen('questionnaire');
-  }
-
-  function handleAssessmentComplete(result: AssessmentResponse) {
-    setAssessmentResult(result);
-    setScreen('results');
-  }
-
-  function handleBookingConfirmed(b: BookingResponse) {
-    setBooking(b);
-    setScreen('confirmation');
-  }
-
-  function handleReturnHome() {
-    setScreen('home-booked');
-  }
-
-  function handleCancel() {
-    setScreen('landing');
-  }
+  const { screen, assessmentResult, booking } = useAppStore();
 
   switch (screen) {
     case 'login':
-      return <Login onLogin={handleLogin} />;
+      return <Login />;
 
     case 'landing':
-      return <LandingPage onBook={handleStartBooking} />;
+    case 'home-booked':
+      return <LandingPage />;
 
     case 'questionnaire':
-      return (
-        <Questionnaire
-          onComplete={handleAssessmentComplete}
-          onCancel={handleCancel}
-        />
-      );
+      return <Questionnaire />;
 
     case 'results':
-      return assessmentResult ? (
-        <Results
-          result={assessmentResult}
-          onConfirmed={handleBookingConfirmed}
-          onCancel={handleCancel}
-        />
-      ) : null;
+      return assessmentResult ? <Results /> : null;
 
     case 'confirmation':
-      return booking ? (
-        <BookingConfirmation
-          booking={booking}
-          onReturnHome={handleReturnHome}
-        />
-      ) : null;
-
-    case 'home-booked':
-      return (
-        <LandingPage
-          bookedSlot={booking?.slot}
-          onBook={handleStartBooking}
-        />
-      );
+      return booking ? <BookingConfirmation /> : null;
   }
 }
