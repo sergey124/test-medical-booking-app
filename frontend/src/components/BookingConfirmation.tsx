@@ -1,18 +1,13 @@
 import type { BookingResponse } from '../types';
+import { formatDateTime } from '../utils/format';
+
+const SLOT_FORMAT: Intl.DateTimeFormatOptions = {
+  weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+};
 
 interface Props {
   booking: BookingResponse;
   onReturnHome: () => void;
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 export default function BookingConfirmation({ booking, onReturnHome }: Props) {
@@ -32,7 +27,7 @@ export default function BookingConfirmation({ booking, onReturnHome }: Props) {
         <div className="bg-gray-50 rounded-xl p-5 text-left space-y-3 mb-8">
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-400 font-medium">Date &amp; Time</p>
-            <p className="text-sm font-semibold text-gray-900 mt-0.5">{formatDateTime(booking.slot)}</p>
+            <p className="text-sm font-semibold text-gray-900 mt-0.5">{formatDateTime(booking.slot, SLOT_FORMAT)}</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-400 font-medium">Care Type</p>

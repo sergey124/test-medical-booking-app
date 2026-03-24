@@ -44,7 +44,9 @@ export default function Questionnaire({ onComplete, onCancel }: Props) {
       return;
     }
     // Submit
-    const total = (answers as number[]).reduce((sum, s) => sum + s, 0);
+    const total = answers
+      .filter((a): a is number => a !== null)
+      .reduce((sum, s) => sum + s, 0);
     setIsSubmitting(true);
     setError('');
     submitAssessment(total)

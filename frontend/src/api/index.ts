@@ -1,6 +1,6 @@
-import type { AssessmentResponse, BookingResponse } from '../types';
+import type { AssessmentResponse, BookingResponse, Recommendation } from '../types';
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
 
 export async function submitAssessment(score: number): Promise<AssessmentResponse> {
   const res = await fetch(`${BASE_URL}/assessment`, {
@@ -17,7 +17,7 @@ export async function submitAssessment(score: number): Promise<AssessmentRespons
 
 export async function confirmBooking(
   slot: string,
-  recommendation: string
+  recommendation: Recommendation
 ): Promise<BookingResponse> {
   const res = await fetch(`${BASE_URL}/booking`, {
     method: 'POST',

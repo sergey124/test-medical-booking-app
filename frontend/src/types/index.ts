@@ -12,17 +12,17 @@ export interface Question {
   options: { label: string; score: number }[];
 }
 
+export type Recommendation = 'Chat' | 'Nurse' | 'Doctor';
+
 export interface AssessmentResponse {
-  recommendation: string;
+  recommendation: Recommendation;
   availableSlots: string[];
 }
 
 export interface BookingResponse {
   confirmationId: string;
   slot: string;
-  recommendation: string;
+  recommendation: Recommendation;
   specialistName: string;
   specialistType: string;
 }
-
-export type Recommendation = 'Chat' | 'Nurse' | 'Doctor';

@@ -20,10 +20,12 @@ cd backend
 ### Frontend (React + TypeScript + Vite)
 ```bash
 cd frontend
-npm run dev      # Start dev server on port 5173
-npm run build    # TypeScript check + Vite build
-npm run lint     # ESLint
-npm run preview  # Preview production build
+npm run dev          # Start dev server on port 5173
+npm run build        # TypeScript check + Vite build
+npm run lint         # ESLint
+npm run preview      # Preview production build
+npm run test:e2e     # Playwright E2E tests (requires backend on :8080)
+npm run test:e2e:ui  # Playwright with interactive UI
 ```
 
 ## Architecture

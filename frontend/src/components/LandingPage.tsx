@@ -1,29 +1,8 @@
+import { formatDateTime, formatWaitTime } from '../utils/format';
+
 interface Props {
   bookedSlot?: string;
   onBook: () => void;
-}
-
-function formatWaitTime(slot: string): string {
-  const slotDate = new Date(slot);
-  const now = new Date();
-  const diffMs = slotDate.getTime() - now.getTime();
-  if (diffMs <= 0) return 'shortly';
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 60) return `${diffMins} min${diffMins !== 1 ? 's' : ''}`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours} hr${diffHours !== 1 ? 's' : ''}`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 export default function LandingPage({ bookedSlot, onBook }: Props) {
@@ -32,10 +11,18 @@ export default function LandingPage({ bookedSlot, onBook }: Props) {
       <div className="max-w-lg w-full">
         {/* Logo / icon */}
         <div className="inline-flex items-center justify-center w-20 h-20 bg-teal-100 rounded-full mb-6">
-          <svg className="w-10 h-10 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-              d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
+          {bookedSlot ? (
+            /* Checkmark — appointment confirmed */
+            <svg aria-label="Appointment confirmed" className="w-10 h-10 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          ) : (
+            /* Stethoscope — default triage entry */
+            <svg aria-label="Medical triage" className="w-10 h-10 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M9 3v5a3 3 0 006 0V3M6 8a6 6 0 0012 0M12 14v3m0 0a3 3 0 100 6 3 3 0 000-6z" />
+            </svg>
+          )}
         </div>
 
         <h1 className="text-4xl font-bold text-gray-900 mb-3">
@@ -54,7 +41,6 @@ export default function LandingPage({ bookedSlot, onBook }: Props) {
             <button
               onClick={onBook}
               className="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
-              aria-label="Book another appointment"
             >
               Book another appointment
             </button>
@@ -67,7 +53,6 @@ export default function LandingPage({ bookedSlot, onBook }: Props) {
             <button
               onClick={onBook}
               className="px-10 py-4 bg-teal-600 hover:bg-teal-700 text-white text-lg font-semibold rounded-xl shadow-md transition focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
-              aria-label="Start booking a meeting"
             >
               Book Meeting
             </button>

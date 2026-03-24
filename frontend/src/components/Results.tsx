@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { AssessmentResponse, BookingResponse } from '../types';
 import { confirmBooking } from '../api';
+import { formatDayLabel, formatTime } from '../utils/format';
 
 interface Props {
   result: AssessmentResponse;
@@ -28,25 +29,6 @@ const RECOMMENDATION_INFO: Record<string, { icon: string; color: string; descrip
       'Your symptoms suggest you need to see a doctor. Please choose a slot below for a medical assessment.',
   },
 };
-
-function formatDayLabel(dateStr: string): string {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const diff = Math.round((date.getTime() - today.getTime()) / 86_400_000);
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Tomorrow';
-  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-}
-
-function formatTime(iso: string): string {
-  const [, timePart] = iso.split('T');
-  const [hStr, mStr] = timePart.split(':');
-  const h = parseInt(hStr, 10);
-  const ampm = h < 12 ? 'AM' : 'PM';
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${mStr} ${ampm}`;
-}
 
 export default function Results({ result, onConfirmed, onCancel }: Props) {
   const slotsByDay = useMemo(() => {
@@ -174,7 +156,6 @@ export default function Results({ result, onConfirmed, onCancel }: Props) {
             onClick={handleBook}
             disabled={!selectedSlot || isBooking}
             className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
-            aria-label="Confirm appointment booking"
           >
             {isBooking ? (
               <span className="flex items-center justify-center gap-2">

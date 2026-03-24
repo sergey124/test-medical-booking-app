@@ -34,7 +34,7 @@ export default function QuestionCard({
           const selected = selectedScore === opt.score;
           return (
             <label
-              key={opt.score}
+              key={opt.label}
               className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition select-none
                 ${selected
                   ? 'border-teal-500 bg-teal-50 text-teal-900'

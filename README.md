@@ -20,8 +20,8 @@ A fullstack medical triage application where patients answer a short questionnai
 
 ---
 
-## Running the Application
 
+## Backend
 ### Prerequisites
 
 Install [SDKMAN](https://sdkman.io/) to manage Java/Maven (or install Java 21 + Maven manually):
@@ -33,15 +33,7 @@ sdk install java 21.0.6-tem
 sdk install maven
 ```
 
-Install Node.js 22 via [fnm](https://github.com/Schniz/fnm) or your preferred version manager:
-
-```bash
-curl -fsSL https://fnm.vercel.app/install | bash
-source ~/.bashrc
-fnm install 22 && fnm use 22
-```
-
-### Backend
+### Running the App
 
 ```bash
 cd backend
@@ -50,8 +42,26 @@ cd backend
 
 The API starts on http://localhost:8080.
 
-### Frontend
+### Running Tests
 
+```bash
+cd backend
+./mvnw test
+```
+
+## Frontend
+
+### Prerequisites
+
+Install Node.js 22 via [fnm](https://github.com/Schniz/fnm) or your preferred version manager:
+
+```bash
+curl -fsSL https://fnm.vercel.app/install | bash
+source ~/.bashrc
+fnm install 22 && fnm use 22
+```
+
+### Running the App
 ```bash
 cd frontend
 npm install
@@ -60,16 +70,31 @@ npm run dev
 
 The app starts on http://localhost:5173.
 
----
+### Running tests
 
-## Running Tests
+#### E2E tests (Playwright)
 
-### Backend tests
+Requires both servers to be running first:
 
 ```bash
-cd backend
-./mvnw test
+# Terminal 1
+cd backend && ./mvnw spring-boot:run
+
+# Terminal 2
+cd frontend && npm run dev
 ```
+
+Then in a third terminal:
+
+```bash
+cd frontend
+npm run test:e2e          # headless
+npm run test:e2e:ui       # interactive Playwright UI
+```
+
+Videos of failing tests are saved to `frontend/test-results/`.
+
+---
 
 ## Assumptions & Trade-offs
 
