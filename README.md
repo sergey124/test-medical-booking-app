@@ -2,6 +2,10 @@
 
 A fullstack medical triage application where patients answer a short questionnaire to determine the level of care they need and are then presented with available appointment slots to book.
 
+## Demo
+Video from full flow UI test:
+[video.webm](https://github.com/user-attachments/assets/725ff56d-7643-47f3-ac53-54473e77eb4d)
+
 ## Tech Stack
 
 ### Backend — Java 21 + Spring Boot 3 + Spring Data JPA + H2
